@@ -11,3 +11,17 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.product-container {
+  margin-top: 80px; /* Make sure this is enough space to push the product list below the navbar */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 20px;
+  padding: 20px;
+}
+
+.product-container .card {
+  flex: 1 1 calc(33.333% - 20px); /* 3 cards per row with space in between */
+  box-sizing: border-box;
+}
