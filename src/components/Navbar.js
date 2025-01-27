@@ -2,17 +2,29 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Components.css';
 import { useProduct } from './context/GlobalContext';
-import ITEMS from '../constants/Items';
+import {useDiscount , useSortLowToHigh , useSortHighToLow , useSortAlpahbeticOrder } from '../services/api/productApi';
+import { PRODUCTS_API_URL } from '../services/constants/apiUrls';
+import axios from 'axios';
+import {debounce } from 'lodash';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  //custom HOOKS
+  const applyDiscount = useDiscount();
+  const sortLowToHigh = useSortLowToHigh();
+  const sortHighToLow = useSortHighToLow();
+  const sortByAlphabets = useSortAlpahbeticOrder();
+
   const [ productPriceValue , setProductPriceValue] = useState();
 
-  const {productCollection, setProductCollection, cartCollection, setCartCollection }= useProduct();
-  const[discountApplied , setDiscountApplied]= useState(false)
+  const {productCollection, setProductCollection, cartCollection, originalProductCollection }= useProduct();
+  const[discountApplied , setDiscountApplied]= useState(false);
+
   // Get the current page path
   const currentPage = location.pathname;
+  
 
   const handleCart = () => {
     navigate('/cart' );  
@@ -27,46 +39,36 @@ const Navbar = () => {
   };
 
   const handleProductNameChange = (event) => {
-    const productName = event.target.value;
-    console.log("productName", productName)
-    if(productName.trim() === '' ) {
-        setProductCollection(ITEMS)
-    }else {
-      const filteredProducts = productCollection.filter((product)=> product.name.toLowerCase().includes(productName.toLowerCase()));
-      setProductCollection(filteredProducts)
-    }
-    
-  }
+    const searchProdName = event.target.value;
+
+    const searchProductByName = async () => {
+        try {
+            const res = await axios.get(`${PRODUCTS_API_URL}/searchProductByName`, {
+                params: { searchProdName }  // Use query parameter for search term
+            });
+            setProductCollection(res?.data);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
+    };
+
+    // Debounced search
+    const debouncedSearch = debounce(searchProductByName, 3000);
+    debouncedSearch();
+};
+
   function handlePriceChange(event) {
     const priceBasedProduct = event.target.value;
     setProductPriceValue(priceBasedProduct)
     if(priceBasedProduct) {
-      const filteredProducts = ITEMS.filter((product=> product.price>=priceBasedProduct));
+      const filteredProducts = originalProductCollection.filter((product=> product.price>=priceBasedProduct));
       setProductCollection(filteredProducts)
     } else {
-      setProductCollection(ITEMS)
+      setProductCollection(originalProductCollection)
     }
   
   }
-  function handleLowToHigh () {
-    const filteredProducts = [...productCollection].sort((a,b)=> a.price - b.price);
-    setProductCollection(filteredProducts)
 
-  }
-  function handleHighToLow () {
-    const filteredProducts = [...productCollection].sort((a,b)=> b.price - a.price);
-    setProductCollection(filteredProducts)
-  }
-
-  function handleAlphabet () {
-    const filteredProducts = [...productCollection].sort((a,b)=> a.name.localeCompare(b.name) );
-    setProductCollection(filteredProducts)
-  }
-  function handleDiscount () {
-    setDiscountApplied(true)
-    const discountedProducts = productCollection.map((product)=> ({...product, price : (product.price*0.9)}));
-    setProductCollection(discountedProducts)
-  }
 
   return (
     <div className="navbar-container">
@@ -80,17 +82,17 @@ const Navbar = () => {
       </div>
 
       <span>
-        <button className={discountApplied ? "discount-button-disabled" : "discount-button"}  disabled={discountApplied} onClick={handleDiscount}>Apply 10% Discount</button>
+        <button className={discountApplied ? "discount-button-disabled" : "discount-button"}  disabled={discountApplied} onClick={applyDiscount}>Apply 10% Discount</button>
       </span>
       {currentPage==='/' && (
         <div className="button-container">
-        <button className="sort-button" onClick={handleLowToHigh}>
+        <button className="sort-button" onClick={sortLowToHigh}>
           Low to High
         </button>
-        <button className="sort-button" onClick={handleHighToLow}>
+        <button className="sort-button" onClick={sortHighToLow}>
           High to Low
         </button>
-        <button className="sort-button" onClick={handleAlphabet}>
+        <button className="sort-button" onClick={sortByAlphabets}>
           Sort by Alphabetic Order
         </button>
       </div>

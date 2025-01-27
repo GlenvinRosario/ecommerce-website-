@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import './styles/Cart.css';
 import Navbar from './Navbar';
-import { useProduct } from './context/GlobalContext';
-import ITEMS from '../constants/Items';
+import { ProductContext, useProduct } from './context/GlobalContext';
 
 const Cart = () => {
-  const { cartCollection, setCartCollection ,productCollection , setProductCollection } = useProduct();
-  
+
+
+  const { cartCollection, setCartCollection  , setProductCollection } = useProduct();
+  const {productCollection , originalProductCollection}= useContext(ProductContext);
   const totalPrice = cartCollection.reduce((total , currentItem) => total + currentItem.price * currentItem.count, 0)
   useEffect(() => {
     setCartCollection(cartCollection)
@@ -41,7 +42,7 @@ const Cart = () => {
 
   const handleClear = () => {
     setCartCollection([]);
-    setProductCollection(ITEMS)
+    setProductCollection(originalProductCollection)
   }
 
   return (
